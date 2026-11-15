@@ -2,6 +2,9 @@
 
 #include "Constantes.h"
 #include "Utilidades.h"
+#include "UsuarioAdultoMayor.h"
+#include "UsuarioEstudiante.h"
+#include "UsuarioRegular.h"
 
 #include <cctype>
 #include <iostream>
@@ -14,72 +17,139 @@ SistemaTransporte::SistemaTransporte()
     capacidadUsuarios = CAPACIDAD_INICIAL;
     cantidadViajes = 0;
     capacidadViajes = CAPACIDAD_INICIAL;
-    usuarios = new Usuario[capacidadUsuarios];
+    usuarios = new Usuario*[capacidadUsuarios];
+
+    for (int i = 0; i < capacidadUsuarios; ++i) {
+        usuarios[i] = nullptr;
+    }
+
     viajes = new Viaje[capacidadViajes];
 }
 
-SistemaTransporte::~SistemaTransporte() {
+SistemaTransporte::~SistemaTransporte()
+{
+    // El sistema creo los dos arreglos, por eso tambien los libera.
+    limpiarUsuarios();
     delete[] usuarios;
     delete[] viajes;
 }
 
-void SistemaTransporte::asegurarEspacioUsuarios() {
-    if (cantidadUsuarios < capacidadUsuarios) return;
+void SistemaTransporte::limpiarUsuarios()
+{
+    for (int i = 0; i < cantidadUsuarios; ++i) {
+        delete usuarios[i];
+        usuarios[i] = nullptr;
+    }
+
+    cantidadUsuarios = 0;
+}
+
+void SistemaTransporte::asegurarEspacioUsuarios()
+{
+    if (cantidadUsuarios < capacidadUsuarios) {
+        return;
+    }
+
+    // Cuando no queda espacio se crea un arreglo mas grande.
     int nuevaCapacidad = capacidadUsuarios * 2;
-    Usuario* nuevos = new Usuario[nuevaCapacidad];
-    for (int i = 0; i < cantidadUsuarios; ++i) nuevos[i] = usuarios[i];
+    Usuario** nuevos = new Usuario*[nuevaCapacidad];
+
+    for (int i = 0; i < cantidadUsuarios; ++i) {
+        nuevos[i] = usuarios[i];
+    }
+
+    for (int i = cantidadUsuarios; i < nuevaCapacidad; ++i) {
+        nuevos[i] = nullptr;
+    }
+
     delete[] usuarios;
     usuarios = nuevos;
     capacidadUsuarios = nuevaCapacidad;
 }
 
-void SistemaTransporte::asegurarEspacioViajes() {
-    if (cantidadViajes < capacidadViajes) return;
+void SistemaTransporte::asegurarEspacioViajes()
+{
+    if (cantidadViajes < capacidadViajes) {
+        return;
+    }
+
+    // Los viajes tambien se guardan en un arreglo dinamico.
     int nuevaCapacidad = capacidadViajes * 2;
     Viaje* nuevos = new Viaje[nuevaCapacidad];
-    for (int i = 0; i < cantidadViajes; ++i) nuevos[i] = viajes[i];
+
+    for (int i = 0; i < cantidadViajes; ++i) {
+        nuevos[i] = viajes[i];
+    }
+
     delete[] viajes;
     viajes = nuevos;
     capacidadViajes = nuevaCapacidad;
 }
 
-int SistemaTransporte::ultimoViajeDe(int posicionUsuario) const {
+int SistemaTransporte::ultimoViajeDe(int posicionUsuario) const
+{
+    // Se recorre desde el final para encontrar el viaje mas reciente.
     for (int i = cantidadViajes - 1; i >= 0; --i) {
-        if (viajes[i].obtenerUsuario() == posicionUsuario) return i;
+        if (viajes[i].obtenerUsuario() == posicionUsuario) {
+            return i;
+        }
     }
+
     return -1;
 }
 
-bool SistemaTransporte::estacionValida(int estacion) const {
+bool SistemaTransporte::estacionValida(int estacion) const
+{
     return estacion >= 0 && estacion < CANT_ESTACIONES;
 }
 
-bool SistemaTransporte::medioValido(int medio) const {
+bool SistemaTransporte::medioValido(int medio) const
+{
     return medio >= 0 && medio < CANT_MEDIOS;
 }
 
-bool SistemaTransporte::tipoValido(int tipo) const {
+bool SistemaTransporte::tipoValido(int tipo) const
+{
     return tipo >= 0 && tipo < CANT_TIPOS;
 }
 
-bool SistemaTransporte::medioPasaPor(int medio, int estacion) const {
-    if (!medioValido(medio) || !estacionValida(estacion)) return false;
-    for (int i = 0; i < LONG_RUTA; ++i) {
-        if (RUTAS[medio][i] == estacion) return true;
+bool SistemaTransporte::medioPasaPor(int medio, int estacion) const
+{
+    if (!medioValido(medio) || !estacionValida(estacion)) {
+        return false;
     }
+
+    for (int i = 0; i < LONG_RUTA; ++i) {
+        if (RUTAS[medio][i] == estacion) {
+            return true;
+        }
+    }
+
     return false;
 }
 
-bool SistemaTransporte::rutaValida(int medio, int origen, int destino) const {
-    return medioPasaPor(medio, origen) && medioPasaPor(medio, destino);
+bool SistemaTransporte::rutaValida(int medio, int origen, int destino) const
+{
+    bool origenDisponible = medioPasaPor(medio, origen);
+    bool destinoDisponible = medioPasaPor(medio, destino);
+
+    return origenDisponible && destinoDisponible;
 }
 
-bool SistemaTransporte::esEstacionConexion(int estacion) const {
-    if (!estacionValida(estacion)) return false;
-    int mediosQuePasan = 0;
-    for (int medio = 0; medio < CANT_MEDIOS; ++medio) {
-        if (medioPasaPor(medio, estacion)) ++mediosQuePasan;
+bool SistemaTransporte::esEstacionConexion(int estacion) const
+{
+    if (!estacionValida(estacion)) {
+        return false;
     }
+
+    int mediosQuePasan = 0;
+
+    for (int medio = 0; medio < CANT_MEDIOS; ++medio) {
+        if (medioPasaPor(medio, estacion)) {
+            ++mediosQuePasan;
+        }
+    }
+
     return mediosQuePasan >= 2;
 }
 
@@ -89,7 +159,7 @@ bool SistemaTransporte::dniValido(const string& dni) const {
     }
 
     for (int i = 0; i < 8; ++i) {
-        if (!isdigit(dni[i])) {
+        if (dni[i] < '0' || dni[i] > '9') {
             return false;
         }
     }
@@ -97,39 +167,81 @@ bool SistemaTransporte::dniValido(const string& dni) const {
     return true;
 }
 
-int SistemaTransporte::buscarUsuarioPorDni(const string& dni) const {
+int SistemaTransporte::buscarUsuarioPorDni(const string& dni) const
+{
     for (int i = 0; i < cantidadUsuarios; ++i) {
-        if (usuarios[i].obtenerDni() == dni) return i;
+        if (usuarios[i]->obtenerDni() == dni) {
+            return i;
+        }
     }
+
     return -1;
 }
 
-int SistemaTransporte::registrarUsuario(const string& nombre, const string& dni, int tipo) {
-    if (nombre.empty() || !dniValido(dni) || !tipoValido(tipo)) return ERR_DNI;
-    if (buscarUsuarioPorDni(dni) != -1) return ERR_DNI_REPETIDO;
+int SistemaTransporte::registrarUsuario(const string& nombre, const string& dni, int tipo)
+{
+    if (nombre.empty() || !dniValido(dni) || !tipoValido(tipo)) {
+        return ERR_DNI;
+    }
+
+    if (buscarUsuarioPorDni(dni) != -1) {
+        return ERR_DNI_REPETIDO;
+    }
+
     asegurarEspacioUsuarios();
+
     int numero = cantidadUsuarios + 1;
-    usuarios[cantidadUsuarios] = Usuario(codigoConCeros("U", numero), nombre, dni, tipo,
-                                          codigoConCeros("T", numero));
+    string codigoUsuario = codigoConCeros("U", numero);
+    string codigoTarjeta = codigoConCeros("T", numero);
+
+    if (tipo == REGULAR) {
+        usuarios[cantidadUsuarios] = new UsuarioRegular(codigoUsuario, nombre, dni, codigoTarjeta);
+    } else if (tipo == ESTUDIANTE) {
+        usuarios[cantidadUsuarios] = new UsuarioEstudiante(codigoUsuario, nombre, dni, codigoTarjeta);
+    } else {
+        usuarios[cantidadUsuarios] = new UsuarioAdultoMayor(codigoUsuario, nombre, dni, codigoTarjeta);
+    }
+
     ++cantidadUsuarios;
+
     return OK;
 }
 
-int SistemaTransporte::recargarTarjeta(int posicionUsuario, int monto) {
-    if (posicionUsuario < 0 || posicionUsuario >= cantidadUsuarios) return ERR_USUARIO;
-    return usuarios[posicionUsuario].obtenerTarjeta().recargar(monto) ? OK : ERR_MONTO;
+int SistemaTransporte::recargarTarjeta(int posicionUsuario, int monto)
+{
+    if (posicionUsuario < 0 || posicionUsuario >= cantidadUsuarios) {
+        return ERR_USUARIO;
+    }
+
+    if (usuarios[posicionUsuario]->obtenerTarjeta().recargar(monto)) {
+        return OK;
+    }
+
+    return ERR_MONTO;
 }
 
-int SistemaTransporte::cambiarEstadoTarjeta(int posicionUsuario, bool activa) {
-    if (posicionUsuario < 0 || posicionUsuario >= cantidadUsuarios) return ERR_USUARIO;
-    usuarios[posicionUsuario].obtenerTarjeta().cambiarEstado(activa);
+int SistemaTransporte::cambiarEstadoTarjeta(int posicionUsuario, bool activa)
+{
+    if (posicionUsuario < 0 || posicionUsuario >= cantidadUsuarios) {
+        return ERR_USUARIO;
+    }
+
+    usuarios[posicionUsuario]->obtenerTarjeta().cambiarEstado(activa);
+
     return OK;
 }
 
-int SistemaTransporte::calcularTarifa(int tipoUsuario, int medio, bool transbordo) const {
+int SistemaTransporte::calcularTarifa(const Usuario& usuario, int medio, bool transbordo) const
+{
     int tarifa = TARIFAS_BASE[medio];
-    tarifa = (tarifa * (100 - DESCUENTOS[tipoUsuario]) + 50) / 100;
-    if (transbordo) tarifa = (tarifa * 50 + 50) / 100;
+    int descuento = usuario.obtenerDescuento();
+
+    tarifa = (tarifa * (100 - descuento) + 50) / 100;
+
+    if (transbordo) {
+        tarifa = (tarifa * 50 + 50) / 100;
+    }
+
     return tarifa;
 }
 
@@ -152,7 +264,9 @@ int SistemaTransporte::registrarViaje(int posicionUsuario, int origen, int desti
         *fueTransbordo = false;
     }
     if (posicionUsuario < 0 || posicionUsuario >= cantidadUsuarios) return ERR_USUARIO;
-    if (!usuarios[posicionUsuario].obtenerTarjeta().estaActiva()) return ERR_TARJETA_INACTIVA;
+    if (!usuarios[posicionUsuario]->obtenerTarjeta().estaActiva()) {
+        return ERR_TARJETA_INACTIVA;
+    }
     if (!estacionValida(origen) || !estacionValida(destino)) return ERR_ESTACION;
     if (origen == destino) return ERR_MISMA_ESTACION;
     if (!medioValido(medio)) return ERR_MEDIO;
@@ -166,11 +280,14 @@ int SistemaTransporte::registrarViaje(int posicionUsuario, int origen, int desti
     }
 
     bool transbordo = esTransbordo(posicionUsuario, origen, medio, minutosNuevo);
-    int tarifa = calcularTarifa(usuarios[posicionUsuario].obtenerTipo(), medio, transbordo);
-    if (usuarios[posicionUsuario].obtenerTarjeta().consultarSaldo() < tarifa) return ERR_SALDO;
+    int tarifa = calcularTarifa(*usuarios[posicionUsuario], medio, transbordo);
+
+    if (usuarios[posicionUsuario]->obtenerTarjeta().consultarSaldo() < tarifa) {
+        return ERR_SALDO;
+    }
 
     asegurarEspacioViajes();
-    usuarios[posicionUsuario].obtenerTarjeta().descontar(tarifa);
+    usuarios[posicionUsuario]->obtenerTarjeta().descontar(tarifa);
     viajes[cantidadViajes] = Viaje(posicionUsuario, origen, destino, medio, fecha, hora, tarifa, transbordo);
     ++cantidadViajes;
     if (tarifaCobrada != NULL) {
@@ -184,7 +301,7 @@ int SistemaTransporte::registrarViaje(int posicionUsuario, int origen, int desti
 }
 
 void SistemaTransporte::imprimirViaje(const Viaje& viaje, int numero) const {
-    const Usuario& usuario = usuarios[viaje.obtenerUsuario()];
+    const Usuario& usuario = *usuarios[viaje.obtenerUsuario()];
     cout << numero << ". " << usuario.obtenerNombre() << " (" << usuario.obtenerCodigo() << ") | "
          << NOMBRES_ESTACION[viaje.obtenerOrigen()] << " -> " << NOMBRES_ESTACION[viaje.obtenerDestino()]
          << " | " << NOMBRES_MEDIO[viaje.obtenerMedio()] << " | "
@@ -200,11 +317,9 @@ void SistemaTransporte::mostrarUsuarios() const {
     }
     cout << "\nUSUARIOS\n";
     for (int i = 0; i < cantidadUsuarios; ++i) {
-        const Usuario& u = usuarios[i];
+        const Usuario& u = *usuarios[i];
         cout << u.obtenerCodigo() << " | " << u.obtenerNombre() << " | DNI " << u.obtenerDni() << " | "
-             << NOMBRES_TIPO[u.obtenerTipo()] << " | " << u.obtenerTarjeta().obtenerCodigo() << " | "
-             << montoTexto(u.obtenerTarjeta().consultarSaldo()) << " | "
-             << (u.obtenerTarjeta().estaActiva() ? "Activa" : "Inactiva") << '\n';
+             << NOMBRES_TIPO[u.obtenerTipo()] << " | " << u.obtenerTarjeta() << '\n';
     }
 }
 
@@ -276,17 +391,22 @@ void SistemaTransporte::mostrarRed() const {
 }
 
 void SistemaTransporte::cargarDatosDemo() {
-    cantidadUsuarios = 0;
+    limpiarUsuarios();
     cantidadViajes = 0;
     registrarUsuario("Ana Torres", "70000001", REGULAR);
     registrarUsuario("Luis Quispe", "70000002", ESTUDIANTE);
     registrarUsuario("Rosa Huaman", "70000003", ADULTO_MAYOR);
     registrarUsuario("Diego Ramos", "70000004", ESTUDIANTE);
     registrarUsuario("Carla Mendoza", "70000005", REGULAR);
-    recargarTarjeta(0, 2000); recargarTarjeta(1, 1500); recargarTarjeta(2, 1000);
-    recargarTarjeta(3, 200); recargarTarjeta(4, 500); cambiarEstadoTarjeta(4, false);
+    recargarTarjeta(0, 2000);
+    recargarTarjeta(1, 1500);
+    recargarTarjeta(2, 1000);
+    recargarTarjeta(3, 200);
+    recargarTarjeta(4, 500);
+    cambiarEstadoTarjeta(4, false);
 
-    int tarifa; bool transbordo;
+    int tarifa;
+    bool transbordo;
     registrarViaje(0, 0, 3, BUS, 20261005, 730, &tarifa, &transbordo);
     registrarViaje(1, 5, 1, METRO, 20261005, 740, &tarifa, &transbordo);
     registrarViaje(1, 1, 4, BUS, 20261005, 755, &tarifa, &transbordo);
@@ -329,9 +449,12 @@ void SistemaTransporte::ejecutarPruebas() const {
     verificar("Bus no conecta Norte y Sur", !rutaValida(BUS, 0, 5), aprobadas, total);
     verificar("Central es estacion de conexion", esEstacionConexion(1), aprobadas, total);
     verificar("Hospital no es estacion de conexion", !esEstacionConexion(3), aprobadas, total);
-    verificar("Tarifa estudiante en Metro", calcularTarifa(ESTUDIANTE, METRO, false) == 140, aprobadas, total);
-    verificar("Tarifa estudiante con transbordo", calcularTarifa(ESTUDIANTE, METRO, true) == 70, aprobadas, total);
-    verificar("Redondeo adulto mayor con transbordo", calcularTarifa(ADULTO_MAYOR, BUS, true) == 38,
+    UsuarioEstudiante estudiante("U001", "Prueba", "70000001", "T001");
+    UsuarioAdultoMayor adultoMayor("U002", "Prueba", "70000002", "T002");
+
+    verificar("Tarifa estudiante en Metro", calcularTarifa(estudiante, METRO, false) == 140, aprobadas, total);
+    verificar("Tarifa estudiante con transbordo", calcularTarifa(estudiante, METRO, true) == 70, aprobadas, total);
+    verificar("Redondeo adulto mayor con transbordo", calcularTarifa(adultoMayor, BUS, true) == 38,
               aprobadas, total);
     verificar("30 minutos exactos entre viajes", minutosAbsolutos(20261005, 1030) - minutosAbsolutos(20261005, 1000) == 30,
               aprobadas, total);
@@ -340,10 +463,20 @@ void SistemaTransporte::ejecutarPruebas() const {
     cout << "Resultado: " << aprobadas << " de " << total << " pruebas aprobadas.\n";
 }
 
-int SistemaTransporte::obtenerCantidadUsuarios() const { return cantidadUsuarios; }
-int SistemaTransporte::obtenerCantidadViajes() const { return cantidadViajes; }
+int SistemaTransporte::obtenerCantidadUsuarios() const
+{
+    return cantidadUsuarios;
+}
+
+int SistemaTransporte::obtenerCantidadViajes() const
+{
+    return cantidadViajes;
+}
 
 int SistemaTransporte::obtenerSaldo(int posicionUsuario) const {
-    if (posicionUsuario < 0 || posicionUsuario >= cantidadUsuarios) return -1;
-    return usuarios[posicionUsuario].obtenerTarjeta().consultarSaldo();
+    if (posicionUsuario < 0 || posicionUsuario >= cantidadUsuarios) {
+        return -1;
+    }
+
+    return usuarios[posicionUsuario]->obtenerTarjeta().consultarSaldo();
 }

@@ -1,6 +1,5 @@
-#include "Consola.h"
-#include "SistemaTransporte.h"
-
+#include "headers/Consola.h"
+#include "headers/SistemaTransporte.h"
 int main()
 {
     SistemaTransporte sistema;

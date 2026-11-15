@@ -4,6 +4,7 @@
 
 Viaje::Viaje()
 {
+    // Los valores -1 indican que aun no existe un viaje valido.
     usuario = -1;
     origen = -1;
     destino = -1;
@@ -69,5 +70,6 @@ bool Viaje::esTransbordo() const
 
 int Viaje::obtenerMinutosAbsolutos() const
 {
+    // Sirve para comparar la fecha y hora con un viaje anterior.
     return minutosAbsolutos(fecha, hora);
 }

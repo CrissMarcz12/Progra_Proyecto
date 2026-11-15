@@ -5,26 +5,30 @@
 
 #include <string>
 
+using namespace std;
+
 class Usuario {
 private:
-    std::string codigo;
-    std::string nombre;
-    std::string dni;
+    string codigo;
+    string nombre;
+    string dni;
     int tipo;
     Tarjeta tarjeta;
 
 public:
     Usuario();
-    Usuario(const std::string& nuevoCodigo, const std::string& nuevoNombre, const std::string& nuevoDni,
-            int nuevoTipo, const std::string& codigoTarjeta);
+    Usuario(const string& nuevoCodigo, const string& nuevoNombre, const string& nuevoDni,
+            int nuevoTipo, const string& codigoTarjeta);
 
-    const std::string& obtenerCodigo() const;
-    const std::string& obtenerNombre() const;
-    const std::string& obtenerDni() const;
+    const string& obtenerCodigo() const;
+    const string& obtenerNombre() const;
+    const string& obtenerDni() const;
     int obtenerTipo() const;
-    int obtenerDescuento() const;
+    virtual int obtenerDescuento() const = 0;
     Tarjeta& obtenerTarjeta();
     const Tarjeta& obtenerTarjeta() const;
+
+    virtual ~Usuario();
 };
 
 #endif

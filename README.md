@@ -10,7 +10,7 @@ Proyecto de Programacion II para CLion. Implementa la propuesta del grupo con PO
 
 ## Opciones principales
 
-El menu permite registrar usuarios, recargar y cambiar el estado de tarjetas, registrar viajes, consultar el historial, ver estadisticas y la red. La opcion 9 carga los cinco usuarios y los doce intentos definidos en la propuesta; se aceptan nueve viajes. La opcion 10 comprueba reglas de fechas, rutas, DNI, tarifas, redondeo y transbordos.
+El menu permite registrar usuarios, recargar y cambiar el estado de tarjetas, registrar viajes, consultar el historial, ver estadisticas y la red. La opcion 9 carga los cinco usuarios y los doce intentos definidos en la propuesta; se aceptan nueve viajes. La demostracion muestra Bus 5, Metro 2, Tranvia 2, recaudacion S/ 9.94, Norte 4 y tres transbordos. La opcion 10 comprueba reglas de fechas, rutas, DNI, tarifas, redondeo y transbordos.
 
 Los importes se guardan como centimos enteros para evitar problemas de redondeo. Por ejemplo, para cargar diez soles se ingresa `10.00`.
 

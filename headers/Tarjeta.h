@@ -2,23 +2,32 @@
 #define PROYECTIO_BUZZIO_TARJETA_H
 
 #include <string>
+#include <ostream>
+
+using namespace std;
 
 class Tarjeta {
 private:
-    std::string codigo;
+    string codigo;
     int saldoCentimos;
     bool activa;
 
 public:
     Tarjeta();
-    Tarjeta(const std::string& nuevoCodigo);
+    Tarjeta(const string& nuevoCodigo);
 
-    const std::string& obtenerCodigo() const;
+    const string& obtenerCodigo() const;
     int consultarSaldo() const;
     bool estaActiva() const;
     void cambiarEstado(bool nuevoEstado);
     bool recargar(int monto);
     bool descontar(int monto);
+
+    Tarjeta& operator+=(int monto);
+
+    friend ostream& operator<<(ostream& salida, const Tarjeta& tarjeta);
 };
+
+ostream& operator<<(ostream& salida, const Tarjeta& tarjeta);
 
 #endif

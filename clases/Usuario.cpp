@@ -6,6 +6,7 @@ using namespace std;
 
 Usuario::Usuario()
 {
+    // El usuario por defecto permite reservar espacio en el arreglo dinamico.
     codigo = "";
     nombre = "";
     dni = "";
@@ -42,11 +43,6 @@ int Usuario::obtenerTipo() const
     return tipo;
 }
 
-int Usuario::obtenerDescuento() const
-{
-    return DESCUENTOS[tipo];
-}
-
 Tarjeta& Usuario::obtenerTarjeta()
 {
     return tarjeta;
@@ -55,4 +51,8 @@ Tarjeta& Usuario::obtenerTarjeta()
 const Tarjeta& Usuario::obtenerTarjeta() const
 {
     return tarjeta;
+}
+
+Usuario::~Usuario()
+{
 }

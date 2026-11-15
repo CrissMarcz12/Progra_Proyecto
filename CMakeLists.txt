@@ -11,6 +11,9 @@ add_executable(Proyectio_Buzzio
         clases/Utilidades.cpp
         clases/Tarjeta.cpp
         clases/Usuario.cpp
+        clases/UsuarioRegular.cpp
+        clases/UsuarioEstudiante.cpp
+        clases/UsuarioAdultoMayor.cpp
         clases/Viaje.cpp
         clases/SistemaTransporte.cpp
         clases/Consola.cpp)
