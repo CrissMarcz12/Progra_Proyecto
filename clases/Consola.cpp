@@ -1,3 +1,17 @@
+/*
+ * ==============================================================
+ *  Archivo:  clases/Consola.cpp
+ *  Proyecto: Sistema Integrado de Gestion de Transporte Publico
+ *            Programacion II (CS6003) - UTEC 2026-II
+ *
+ *  Que tiene este archivo:
+ *    - La interfaz de texto del programa: el menu y una funcion por opcion.
+ *    - Funciones para leer datos con validacion (enteros, montos, lineas).
+ *    - Los mensajes que corresponden a cada codigo de error.
+ *    - Aqui no se calcula nada: solo se piden datos y se llama al sistema.
+ * ==============================================================
+ */
+
 #include "Consola.h"
 #include "Constantes.h"
 #include "Utilidades.h"
@@ -7,6 +21,11 @@
 
 using namespace std;
 
+// ------------------------------------------------------------
+// leerLinea(mensaje)
+// Que hace: muestra el mensaje y lee una linea completa (permite espacios,
+//           por ejemplo un nombre completo).
+// ------------------------------------------------------------
 string leerLinea(const string& mensaje)
 {
     cout << mensaje;
@@ -17,6 +36,11 @@ string leerLinea(const string& mensaje)
     return texto;
 }
 
+// ------------------------------------------------------------
+// leerEntero(mensaje, minimo, maximo)
+// Que hace: pide un numero hasta que sea un entero dentro del rango.
+//           Si escriben letras, limpia el error de cin y vuelve a pedir.
+// ------------------------------------------------------------
 int leerEntero(const string& mensaje, int minimo, int maximo)
 {
     while (true) {
@@ -36,6 +60,11 @@ int leerEntero(const string& mensaje, int minimo, int maximo)
     }
 }
 
+// ------------------------------------------------------------
+// leerMontoEnCentimos(mensaje)
+// Que hace: pide un monto como "10.50" hasta que sea valido y lo
+//           devuelve en centimos (usa convertirMontoACentimos).
+// ------------------------------------------------------------
 int leerMontoEnCentimos(const string& mensaje)
 {
     while (true) {
@@ -50,6 +79,11 @@ int leerMontoEnCentimos(const string& mensaje)
     }
 }
 
+// ------------------------------------------------------------
+// buscarUsuarioDesdeConsola(sistema)
+// Que hace: pide un DNI y busca al usuario.
+// Devuelve: su posicion, o -1 (y avisa) si no existe.
+// ------------------------------------------------------------
 int buscarUsuarioDesdeConsola(const SistemaTransporte& sistema)
 {
     string dni = leerLinea("DNI del usuario: ");
@@ -62,6 +96,11 @@ int buscarUsuarioDesdeConsola(const SistemaTransporte& sistema)
     return posicion;
 }
 
+// ------------------------------------------------------------
+// mensajeError(codigo)
+// Que hace: traduce el codigo que devuelve el sistema (0 a 12) a un
+//           mensaje para el usuario.
+// ------------------------------------------------------------
 const char* mensajeError(int codigo)
 {
     switch (codigo) {
@@ -96,6 +135,7 @@ const char* mensajeError(int codigo)
     }
 }
 
+// Imprime las opciones del menu principal (0 a 11).
 void mostrarMenu()
 {
     cout << "\n==============================================\n";
@@ -115,6 +155,10 @@ void mostrarMenu()
     cout << " 0. Salir\n";
 }
 
+// ------------------------------------------------------------
+// opcionRegistrarUsuario  -- opcion 1
+// Pide nombre, DNI y tipo, y llama a registrarUsuario().
+// ------------------------------------------------------------
 void opcionRegistrarUsuario(SistemaTransporte& sistema)
 {
     string nombre;
@@ -136,6 +180,10 @@ void opcionRegistrarUsuario(SistemaTransporte& sistema)
     cout << mensajeError(resultado) << '\n';
 }
 
+// ------------------------------------------------------------
+// opcionRecargar  -- opcion 2
+// Busca al usuario por DNI, pide el monto y llama a recargarTarjeta().
+// ------------------------------------------------------------
 void opcionRecargar(SistemaTransporte& sistema)
 {
     int usuario = buscarUsuarioDesdeConsola(sistema);
@@ -154,6 +202,10 @@ void opcionRecargar(SistemaTransporte& sistema)
     }
 }
 
+// ------------------------------------------------------------
+// opcionConsultarSaldo  -- opcion 3
+// Busca al usuario por DNI y muestra su saldo en soles.
+// ------------------------------------------------------------
 void opcionConsultarSaldo(const SistemaTransporte& sistema)
 {
     int usuario = buscarUsuarioDesdeConsola(sistema);
@@ -163,6 +215,10 @@ void opcionConsultarSaldo(const SistemaTransporte& sistema)
     }
 }
 
+// ------------------------------------------------------------
+// opcionEstadoTarjeta  -- opcion 4
+// Busca al usuario y activa o desactiva su tarjeta.
+// ------------------------------------------------------------
 void opcionEstadoTarjeta(SistemaTransporte& sistema)
 {
     int usuario = buscarUsuarioDesdeConsola(sistema);
@@ -177,6 +233,11 @@ void opcionEstadoTarjeta(SistemaTransporte& sistema)
     cout << mensajeError(resultado) << '\n';
 }
 
+// ------------------------------------------------------------
+// opcionRegistrarViaje  -- opcion 5
+// Pide origen, destino, medio, fecha y hora; llama a registrarViaje()
+// y muestra la tarifa cobrada, si hubo transbordo y el saldo restante.
+// ------------------------------------------------------------
 void opcionRegistrarViaje(SistemaTransporte& sistema)
 {
     int usuario = buscarUsuarioDesdeConsola(sistema);
@@ -213,6 +274,10 @@ void opcionRegistrarViaje(SistemaTransporte& sistema)
     }
 }
 
+// ------------------------------------------------------------
+// opcionHistorial  -- opcion 6
+// Muestra el historial completo o solo el de un usuario.
+// ------------------------------------------------------------
 void opcionHistorial(const SistemaTransporte& sistema)
 {
     int opcion = leerEntero("1. Todos los usuarios  2. Un usuario: ", 1, 2);
@@ -228,6 +293,11 @@ void opcionHistorial(const SistemaTransporte& sistema)
     }
 }
 
+// ------------------------------------------------------------
+// ejecutarAplicacion(sistema)
+// Que hace: el ciclo principal: muestra el menu, lee la opcion y llama
+//           a la funcion que corresponde con un switch, hasta elegir 0.
+// ------------------------------------------------------------
 void ejecutarAplicacion(SistemaTransporte& sistema)
 {
     cout << "Bienvenido. Los montos se almacenan internamente en centimos.\n";

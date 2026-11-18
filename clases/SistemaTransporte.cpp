@@ -1,3 +1,21 @@
+/*
+ * ==============================================================
+ *  Archivo:  clases/SistemaTransporte.cpp
+ *  Proyecto: Sistema Integrado de Gestion de Transporte Publico
+ *            Programacion II (CS6003) - UTEC 2026-II
+ *
+ *  Que tiene este archivo:
+ *    - La implementacion de SistemaTransporte:
+ *        1. Memoria dinamica: crear, agrandar y liberar los arreglos.
+ *        2. Validaciones de la red: estaciones, medios, rutas y conexiones.
+ *        3. Usuarios y tarjetas: registrar, recargar, activar/desactivar.
+ *        4. Viajes: tarifa con descuentos, transbordo y registro del viaje.
+ *        5. Reportes: usuarios, historial, estadisticas y red.
+ *        6. Datos de demostracion y pruebas internas.
+ *    - Los montos estan en centimos y las horas se comparan en minutos.
+ * ==============================================================
+ */
+
 #include "SistemaTransporte.h"
 
 #include "Constantes.h"
@@ -11,6 +29,11 @@
 
 using namespace std;
 
+// ------------------------------------------------------------
+// SistemaTransporte()  -- constructor
+// Que hace: crea los dos arreglos dinamicos con CAPACIDAD_INICIAL (4)
+//           y deja el sistema sin usuarios ni viajes.
+// ------------------------------------------------------------
 SistemaTransporte::SistemaTransporte()
 {
     cantidadUsuarios = 0;
@@ -26,6 +49,11 @@ SistemaTransporte::SistemaTransporte()
     viajes = new Viaje[capacidadViajes];
 }
 
+// ------------------------------------------------------------
+// ~SistemaTransporte()  -- destructor
+// Que hace: borra cada usuario (delete) y luego los dos arreglos (delete[]).
+//           Asi no queda memoria sin liberar al cerrar el programa.
+// ------------------------------------------------------------
 SistemaTransporte::~SistemaTransporte()
 {
     // El sistema creo los dos arreglos, por eso tambien los libera.
@@ -34,6 +62,11 @@ SistemaTransporte::~SistemaTransporte()
     delete[] viajes;
 }
 
+// ------------------------------------------------------------
+// limpiarUsuarios()
+// Que hace: libera cada usuario creado con new y deja la cantidad en 0.
+//           Se usa en el destructor y antes de cargar la demostracion.
+// ------------------------------------------------------------
 void SistemaTransporte::limpiarUsuarios()
 {
     for (int i = 0; i < cantidadUsuarios; ++i) {
@@ -44,6 +77,12 @@ void SistemaTransporte::limpiarUsuarios()
     cantidadUsuarios = 0;
 }
 
+// ------------------------------------------------------------
+// asegurarEspacioUsuarios()
+// Que hace: si el arreglo de usuarios esta lleno, crea uno del doble,
+//           copia los punteros, libera el anterior y apunta al nuevo.
+//           Si todavia hay espacio, no hace nada.
+// ------------------------------------------------------------
 void SistemaTransporte::asegurarEspacioUsuarios()
 {
     if (cantidadUsuarios < capacidadUsuarios) {
@@ -67,6 +106,10 @@ void SistemaTransporte::asegurarEspacioUsuarios()
     capacidadUsuarios = nuevaCapacidad;
 }
 
+// ------------------------------------------------------------
+// asegurarEspacioViajes()
+// Que hace: lo mismo que la anterior, pero con el historial de viajes.
+// ------------------------------------------------------------
 void SistemaTransporte::asegurarEspacioViajes()
 {
     if (cantidadViajes < capacidadViajes) {
@@ -86,6 +129,11 @@ void SistemaTransporte::asegurarEspacioViajes()
     capacidadViajes = nuevaCapacidad;
 }
 
+// ------------------------------------------------------------
+// ultimoViajeDe(posicionUsuario)
+// Que hace: recorre el historial de atras hacia adelante y devuelve la
+//           posicion del viaje mas reciente de ese usuario, o -1 si no tiene.
+// ------------------------------------------------------------
 int SistemaTransporte::ultimoViajeDe(int posicionUsuario) const
 {
     // Se recorre desde el final para encontrar el viaje mas reciente.
@@ -98,21 +146,29 @@ int SistemaTransporte::ultimoViajeDe(int posicionUsuario) const
     return -1;
 }
 
+// Devuelve true si la estacion esta entre 0 y 7.
 bool SistemaTransporte::estacionValida(int estacion) const
 {
     return estacion >= 0 && estacion < CANT_ESTACIONES;
 }
 
+// Devuelve true si el medio es 0 (Bus), 1 (Metro) o 2 (Tranvia).
 bool SistemaTransporte::medioValido(int medio) const
 {
     return medio >= 0 && medio < CANT_MEDIOS;
 }
 
+// Devuelve true si el tipo de usuario es 0, 1 o 2.
 bool SistemaTransporte::tipoValido(int tipo) const
 {
     return tipo >= 0 && tipo < CANT_TIPOS;
 }
 
+// ------------------------------------------------------------
+// medioPasaPor(medio, estacion)
+// Que hace: recorre la fila RUTAS[medio] (i = 0 .. 4) buscando la estacion.
+// Devuelve: true si la encuentra, false si termina el ciclo sin hallarla.
+// ------------------------------------------------------------
 bool SistemaTransporte::medioPasaPor(int medio, int estacion) const
 {
     if (!medioValido(medio) || !estacionValida(estacion)) {
@@ -128,6 +184,11 @@ bool SistemaTransporte::medioPasaPor(int medio, int estacion) const
     return false;
 }
 
+// ------------------------------------------------------------
+// rutaValida(medio, origen, destino)
+// Que hace: el viaje es posible si el medio pasa por el origen Y por el
+//           destino. Como cada ruta es una sola linea, vale en ambos sentidos.
+// ------------------------------------------------------------
 bool SistemaTransporte::rutaValida(int medio, int origen, int destino) const
 {
     bool origenDisponible = medioPasaPor(medio, origen);
@@ -136,6 +197,11 @@ bool SistemaTransporte::rutaValida(int medio, int origen, int destino) const
     return origenDisponible && destinoDisponible;
 }
 
+// ------------------------------------------------------------
+// esEstacionConexion(estacion)
+// Que hace: cuenta cuantos medios pasan por la estacion.
+// Devuelve: true si pasan 2 o mas (ahi se puede hacer transbordo).
+// ------------------------------------------------------------
 bool SistemaTransporte::esEstacionConexion(int estacion) const
 {
     if (!estacionValida(estacion)) {
@@ -153,6 +219,11 @@ bool SistemaTransporte::esEstacionConexion(int estacion) const
     return mediosQuePasan >= 2;
 }
 
+// ------------------------------------------------------------
+// dniValido(dni)
+// Que hace: revisa que el DNI tenga exactamente 8 caracteres y que todos
+//           sean digitos del 0 al 9.
+// ------------------------------------------------------------
 bool SistemaTransporte::dniValido(const string& dni) const {
     if (dni.length() != 8) {
         return false;
@@ -167,6 +238,11 @@ bool SistemaTransporte::dniValido(const string& dni) const {
     return true;
 }
 
+// ------------------------------------------------------------
+// buscarUsuarioPorDni(dni)
+// Que hace: busqueda lineal en el arreglo de usuarios.
+// Devuelve: la posicion del usuario, o -1 si no existe.
+// ------------------------------------------------------------
 int SistemaTransporte::buscarUsuarioPorDni(const string& dni) const
 {
     for (int i = 0; i < cantidadUsuarios; ++i) {
@@ -178,6 +254,13 @@ int SistemaTransporte::buscarUsuarioPorDni(const string& dni) const
     return -1;
 }
 
+// ------------------------------------------------------------
+// registrarUsuario(nombre, dni, tipo)
+// Que hace: 1) valida nombre, DNI y tipo; 2) revisa que el DNI no exista;
+//           3) asegura espacio; 4) genera los codigos U00X y T00X;
+//           5) crea con new el tipo de usuario elegido (con su tarjeta).
+// Devuelve: OK, ERR_DNI o ERR_DNI_REPETIDO.
+// ------------------------------------------------------------
 int SistemaTransporte::registrarUsuario(const string& nombre, const string& dni, int tipo)
 {
     if (nombre.empty() || !dniValido(dni) || !tipoValido(tipo)) {
@@ -207,6 +290,12 @@ int SistemaTransporte::registrarUsuario(const string& nombre, const string& dni,
     return OK;
 }
 
+// ------------------------------------------------------------
+// recargarTarjeta(posicionUsuario, monto)
+// Que hace: busca la tarjeta del usuario y le pide recargar el monto.
+//           No revisa si la tarjeta esta activa: una inactiva tambien se recarga.
+// Devuelve: OK, ERR_USUARIO o ERR_MONTO.
+// ------------------------------------------------------------
 int SistemaTransporte::recargarTarjeta(int posicionUsuario, int monto)
 {
     if (posicionUsuario < 0 || posicionUsuario >= cantidadUsuarios) {
@@ -220,6 +309,11 @@ int SistemaTransporte::recargarTarjeta(int posicionUsuario, int monto)
     return ERR_MONTO;
 }
 
+// ------------------------------------------------------------
+// cambiarEstadoTarjeta(posicionUsuario, activa)
+// Que hace: activa (true) o desactiva (false) la tarjeta del usuario.
+// Devuelve: OK o ERR_USUARIO.
+// ------------------------------------------------------------
 int SistemaTransporte::cambiarEstadoTarjeta(int posicionUsuario, bool activa)
 {
     if (posicionUsuario < 0 || posicionUsuario >= cantidadUsuarios) {
@@ -231,6 +325,17 @@ int SistemaTransporte::cambiarEstadoTarjeta(int posicionUsuario, bool activa)
     return OK;
 }
 
+// ------------------------------------------------------------
+// calcularTarifa(usuario, medio, transbordo)
+// Que hace: 1) toma la tarifa base del medio (Bus 150, Metro 200, Tranvia 180);
+//           2) aplica el descuento del usuario con obtenerDescuento()
+//              (POLIMORFISMO: cada tipo responde su propio %);
+//           3) si es transbordo, aplica 50 % adicional sobre ese resultado.
+// El "+ 50" antes de dividir entre 100 redondea al centimo mas cercano,
+// porque la division entera corta los decimales.
+// Ejemplo:  estudiante en Bus con transbordo: 150 -> 105 -> 53 (S/ 0.53).
+// Devuelve: la tarifa en centimos.
+// ------------------------------------------------------------
 int SistemaTransporte::calcularTarifa(const Usuario& usuario, int medio, bool transbordo) const
 {
     int tarifa = TARIFAS_BASE[medio];
@@ -245,6 +350,14 @@ int SistemaTransporte::calcularTarifa(const Usuario& usuario, int medio, bool tr
     return tarifa;
 }
 
+// ------------------------------------------------------------
+// esTransbordo(posicionUsuario, origen, medio, minutosNuevo)
+// Que hace: compara el viaje nuevo con el ultimo viaje del mismo usuario.
+// Es transbordo si se cumplen las 5 condiciones a la vez:
+//   1. tiene un viaje anterior          2. cambio de medio
+//   3. sube donde bajo antes            4. es estacion de conexion
+//   5. pasaron entre 0 y 30 minutos
+// ------------------------------------------------------------
 bool SistemaTransporte::esTransbordo(int posicionUsuario, int origen, int medio, int minutosNuevo) const {
     int posicionUltimo = ultimoViajeDe(posicionUsuario);
     if (posicionUltimo == -1) return false;
@@ -254,6 +367,17 @@ bool SistemaTransporte::esTransbordo(int posicionUsuario, int origen, int medio,
            esEstacionConexion(origen) && diferencia >= 0 && diferencia <= 30;
 }
 
+// ------------------------------------------------------------
+// registrarViaje(...)  -- el proceso central del sistema
+// Paso 1, validar en orden (si una falla, devuelve su error y no cobra):
+//   usuario existe, tarjeta activa, estaciones validas, origen != destino,
+//   medio valido, ruta valida, fecha y hora validas, y que no sea anterior
+//   al ultimo viaje del usuario.
+// Paso 2, cobrar: revisa transbordo, calcula la tarifa, compara con el
+//   saldo, descuenta y guarda el viaje en el historial.
+// tarifaCobrada y fueTransbordo son punteros de salida: ahi se devuelven
+// la tarifa y si hubo transbordo (pueden ser NULL si no se necesitan).
+// ------------------------------------------------------------
 int SistemaTransporte::registrarViaje(int posicionUsuario, int origen, int destino, int medio, int fecha, int hora,
                                       int* tarifaCobrada, bool* fueTransbordo) {
     if (tarifaCobrada != NULL) {
@@ -300,6 +424,11 @@ int SistemaTransporte::registrarViaje(int posicionUsuario, int origen, int desti
     return OK;
 }
 
+// ------------------------------------------------------------
+// imprimirViaje(viaje, numero)
+// Que hace: muestra un viaje en una linea: usuario, ruta, medio, fecha,
+//           tarifa y si fue transbordo.
+// ------------------------------------------------------------
 void SistemaTransporte::imprimirViaje(const Viaje& viaje, int numero) const {
     const Usuario& usuario = *usuarios[viaje.obtenerUsuario()];
     cout << numero << ". " << usuario.obtenerNombre() << " (" << usuario.obtenerCodigo() << ") | "
@@ -310,6 +439,11 @@ void SistemaTransporte::imprimirViaje(const Viaje& viaje, int numero) const {
          << (viaje.esTransbordo() ? "Transbordo" : "Viaje normal") << '\n';
 }
 
+// ------------------------------------------------------------
+// mostrarUsuarios()
+// Que hace: lista cada usuario con su DNI, tipo y tarjeta.
+//           La tarjeta se imprime con el operador << sobrecargado.
+// ------------------------------------------------------------
 void SistemaTransporte::mostrarUsuarios() const {
     if (cantidadUsuarios == 0) {
         cout << "No hay usuarios registrados.\n";
@@ -323,6 +457,10 @@ void SistemaTransporte::mostrarUsuarios() const {
     }
 }
 
+// ------------------------------------------------------------
+// mostrarHistorial(posicionUsuario)
+// Que hace: muestra todos los viajes (-1) o solo los de un usuario.
+// ------------------------------------------------------------
 void SistemaTransporte::mostrarHistorial(int posicionUsuario) const {
     if (cantidadViajes == 0) {
         cout << "No hay viajes registrados.\n";
@@ -339,6 +477,12 @@ void SistemaTransporte::mostrarHistorial(int posicionUsuario) const {
     if (!encontro) cout << "El usuario aun no tiene viajes aceptados.\n";
 }
 
+// ------------------------------------------------------------
+// mostrarEstadisticas()
+// Que hace: recorre el historial UNA vez y cuenta: viajes por medio,
+//           apariciones de cada estacion (origen + destino), recaudacion
+//           y transbordos. Luego busca la estacion con mas apariciones.
+// ------------------------------------------------------------
 void SistemaTransporte::mostrarEstadisticas() const {
     int porMedio[3] = {0, 0, 0};
     int usoEstacion[8] = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -368,6 +512,11 @@ void SistemaTransporte::mostrarEstadisticas() const {
     cout << "Total de transbordos: " << transbordos << '\n';
 }
 
+// ------------------------------------------------------------
+// mostrarRed()
+// Que hace: muestra las estaciones (marcando las de conexion), las rutas
+//           de cada medio con su tarifa y los descuentos.
+// ------------------------------------------------------------
 void SistemaTransporte::mostrarRed() const {
     cout << "\nRED DE TRANSPORTE\nEstaciones:\n";
     for (int i = 0; i < CANT_ESTACIONES; ++i) {
@@ -390,6 +539,12 @@ void SistemaTransporte::mostrarRed() const {
     cout << "\nDescuentos: Regular 0%, Estudiante 30%, Adulto mayor 50%.\n";
 }
 
+// ------------------------------------------------------------
+// cargarDatosDemo()  -- opcion 9 del menu
+// Que hace: borra lo registrado y carga 5 usuarios y 12 intentos de viaje.
+// Resultado esperado: 9 aceptados y 3 rechazados; Bus 5, Metro 2,
+// Tranvia 2, recaudacion S/ 9.94, Norte con 4 y 3 transbordos.
+// ------------------------------------------------------------
 void SistemaTransporte::cargarDatosDemo() {
     limpiarUsuarios();
     cantidadViajes = 0;
@@ -424,6 +579,11 @@ void SistemaTransporte::cargarDatosDemo() {
     cout << "Resultados esperados: Bus 5, Metro 2, Tranvia 2, recaudacion S/ 9.94, Norte 4, transbordos 3.\n";
 }
 
+// ------------------------------------------------------------
+// verificar(nombre, condicion, aprobadas, total)
+// Que hace: imprime [OK] o [FALLO] para una prueba y actualiza los
+//           contadores (por referencia).
+// ------------------------------------------------------------
 bool SistemaTransporte::verificar(const string& nombre, bool condicion, int& aprobadas, int& total) const {
     ++total;
     if (condicion) {
@@ -435,6 +595,11 @@ bool SistemaTransporte::verificar(const string& nombre, bool condicion, int& apr
     return false;
 }
 
+// ------------------------------------------------------------
+// ejecutarPruebas()  -- opcion 10 del menu
+// Que hace: ejecuta 15 pruebas internas de fechas, horas, DNI, rutas,
+//           conexiones, tarifas, redondeo y tiempos de transbordo.
+// ------------------------------------------------------------
 void SistemaTransporte::ejecutarPruebas() const {
     int aprobadas = 0;
     int total = 0;
@@ -463,16 +628,22 @@ void SistemaTransporte::ejecutarPruebas() const {
     cout << "Resultado: " << aprobadas << " de " << total << " pruebas aprobadas.\n";
 }
 
+// Devuelve cuantos usuarios hay registrados.
 int SistemaTransporte::obtenerCantidadUsuarios() const
 {
     return cantidadUsuarios;
 }
 
+// Devuelve cuantos viajes hay en el historial.
 int SistemaTransporte::obtenerCantidadViajes() const
 {
     return cantidadViajes;
 }
 
+// ------------------------------------------------------------
+// obtenerSaldo(posicionUsuario)
+// Devuelve: el saldo de la tarjeta en centimos, o -1 si el usuario no existe.
+// ------------------------------------------------------------
 int SistemaTransporte::obtenerSaldo(int posicionUsuario) const {
     if (posicionUsuario < 0 || posicionUsuario >= cantidadUsuarios) {
         return -1;
